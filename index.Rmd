@@ -1,0 +1,66 @@
+---
+title: "Summaries"
+date: "2019-03-18"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(tidyverse)
+library(nycflights13)
+```
+
+dplyr summarise() function can be used to calculate counts and proportions of logical values: sum(x > 10), mean(y == 0). 
+
+When used with numeric functions, TRUE is converted to 1 and FALSE to 0. 
+
+> This makes sum() and mean() very useful: sum(x) gives the number of TRUEs in x, and mean(x) gives the proportion.
+
+### Exercises
+
+1. Using nycflights13 "flights" dataset, brainstorm at least 5 different ways to assess the typical delay characteristics of a group of flights. 
+
+```{r}
+flights
+```
+
+
+Consider the following scenarios:
+
+  - A flight is 15 minutes early 50% of the time, and 15 minutes late 50% of the time.
+
+```{r}
+
+```
+
+
+  - A flight is always 10 minutes late.
+
+```{r}
+
+```
+
+  - A flight is 30 minutes early 50% of the time, and 30 minutes late 50% of the time.
+
+  - 99% of the time a flight is on time. 1% of the time it’s 2 hours late.
+
+```{r}
+
+```
+
+
+  - Which is more important: arrival delay or departure delay?
+
+2. Come up with another approach that will give you the same output as not_cancelled %>% count(dest) and not_cancelled %>% count(tailnum, wt = distance) (without using count()).
+
+3. Our definition of cancelled flights (is.na(dep_delay) | is.na(arr_delay) ) is slightly suboptimal. Why? Which is the most important column?
+
+4. Look at the number of cancelled flights per day. Is there a pattern? Is the proportion of cancelled flights related to the average delay?
+
+5. Which carrier has the worst delays? Challenge: can you disentangle the effects of bad airports vs. bad carriers? Why/why not? (Hint: think about flights %>% group_by(carrier, dest) %>% summarise(n()))
+
+6. What does the sort argument to count() do. When might you use it?
