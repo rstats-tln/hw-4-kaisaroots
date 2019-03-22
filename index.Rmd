@@ -1,6 +1,7 @@
 ---
 title: "Summaries"
-date: "2019-03-18"
+author: "Kaisa Roots"
+date: "2019-03-21"
 output: html_document
 ---
 
@@ -34,30 +35,98 @@ Consider the following scenarios:
   - A flight is 15 minutes early 50% of the time, and 15 minutes late 50% of the time.
 
 ```{r}
+flights %>% 
+  group_by(flight) %>% 
+  summarize(n = n(),
+            fifteen_early = mean(arr_delay == -15, na.rm = TRUE),
+            fifteen_late = mean(arr_delay == 15, na.rm =TRUE)) %>% 
+  filter(fifteen_early == 0.5 | fifteen_late == 0.5)
+```
 
+```{r}
+flights %>% 
+  filter(arr_delay == "15" | arr_delay == "-15")
 ```
 
 
   - A flight is always 10 minutes late.
 
 ```{r}
+flights %>% 
+  group_by(flight) %>% 
+  summarize(n = n(),
+            ten_late = mean(arr_delay == 10, na.rm = TRUE)) %>%
+  filter(ten_late == 1)
+```
 
+```{r}
+filter(flights, arr_delay == "10")
 ```
 
   - A flight is 30 minutes early 50% of the time, and 30 minutes late 50% of the time.
+  
+```{r}
+flights %>% 
+  group_by(flight) %>% 
+  summarize(n = n(),
+            thirty_early = mean(arr_delay == -30, na.rm = TRUE),
+            thirty_late = mean(arr_delay == 30, na.rm =TRUE)) %>% 
+  filter(thirty_early == 0.5 | thirty_late == 0.5)
+```
+
+```{r}
+flights %>% 
+  filter(arr_delay == "30" | arr_delay == "-30")
+```
 
   - 99% of the time a flight is on time. 1% of the time it’s 2 hours late.
 
 ```{r}
-
+flights %>% 
+  group_by(flight) %>% 
+  summarize(n = n(),
+            percentage_on_time = mean(arr_delay == 0, na.rm = TRUE),
+            two_hours = mean(arr_delay > 120, na.rm = TRUE)) %>% 
+  filter(percentage_on_time == 0.99 | two_hours == 0.01)
 ```
 
 
   - Which is more important: arrival delay or departure delay?
+  
+  Both arrival delay and departure delay are unwanted. With arrival delay, many other flights are affected and connected flights might be missed. However, departure delay directly contibutes to arrival delay. Additionally, the difference between arrival delay and departure delay are used to define air time, hence real arrival time can show whether any problems during the flight have occured. 
 
 2. Come up with another approach that will give you the same output as not_cancelled %>% count(dest) and not_cancelled %>% count(tailnum, wt = distance) (without using count()).
 
+```{r}
+not_cancelled <- 
+  count(flights, dest)
+not_cancelled
+```
+
+```{r}
+not_cancelled_new <-
+  flights %>% 
+  filter(!is.na(dep_delay), !is.na(arr_delay))
+not_cancelled_new
+```
+
+```{r}
+not_cancelled_2 <-
+  count(flights, tailnum, wt = distance)
+not_cancelled_2
+```
+
+```{r}
+not_cancelled_2_new <-
+  flights %>% 
+  group_by(tailnum) %>% 
+  summarize(n = sum(distance))
+not_cancelled_2_new
+```
+
 3. Our definition of cancelled flights (is.na(dep_delay) | is.na(arr_delay) ) is slightly suboptimal. Why? Which is the most important column?
+
+
 
 4. Look at the number of cancelled flights per day. Is there a pattern? Is the proportion of cancelled flights related to the average delay?
 
