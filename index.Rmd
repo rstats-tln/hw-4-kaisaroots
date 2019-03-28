@@ -1,7 +1,7 @@
 ---
 title: "Summaries"
 author: "Kaisa Roots"
-date: "2019-03-21"
+date: "2019-03-28"
 output: html_document
 ---
 
@@ -29,7 +29,6 @@ When used with numeric functions, TRUE is converted to 1 and FALSE to 0.
 flights
 ```
 
-
 Consider the following scenarios:
 
   - A flight is 15 minutes early 50% of the time, and 15 minutes late 50% of the time.
@@ -43,12 +42,6 @@ flights %>%
   filter(fifteen_early == 0.5 | fifteen_late == 0.5)
 ```
 
-```{r}
-flights %>% 
-  filter(arr_delay == "15" | arr_delay == "-15")
-```
-
-
   - A flight is always 10 minutes late.
 
 ```{r}
@@ -59,10 +52,6 @@ flights %>%
   filter(ten_late == 1)
 ```
 
-```{r}
-filter(flights, arr_delay == "10")
-```
-
   - A flight is 30 minutes early 50% of the time, and 30 minutes late 50% of the time.
   
 ```{r}
@@ -71,12 +60,7 @@ flights %>%
   summarize(n = n(),
             thirty_early = mean(arr_delay == -30, na.rm = TRUE),
             thirty_late = mean(arr_delay == 30, na.rm =TRUE)) %>% 
-  filter(thirty_early == 0.5 | thirty_late == 0.5)
-```
-
-```{r}
-flights %>% 
-  filter(arr_delay == "30" | arr_delay == "-30")
+  filter(thirty_early == 0.5 & thirty_late == 0.5)
 ```
 
   - 99% of the time a flight is on time. 1% of the time it’s 2 hours late.
@@ -87,9 +71,8 @@ flights %>%
   summarize(n = n(),
             percentage_on_time = mean(arr_delay == 0, na.rm = TRUE),
             two_hours = mean(arr_delay > 120, na.rm = TRUE)) %>% 
-  filter(percentage_on_time == 0.99 | two_hours == 0.01)
+  filter(percentage_on_time == 0.99 & two_hours == 0.01)
 ```
-
 
   - Which is more important: arrival delay or departure delay?
   
@@ -98,38 +81,95 @@ flights %>%
 2. Come up with another approach that will give you the same output as not_cancelled %>% count(dest) and not_cancelled %>% count(tailnum, wt = distance) (without using count()).
 
 ```{r}
-not_cancelled <- 
-  count(flights, dest)
+not_cancelled <- flights %>% 
+  filter(!is.na(dep_delay), !is.na(arr_delay))
 not_cancelled
 ```
 
+##### 1
+
 ```{r}
-not_cancelled_new <-
-  flights %>% 
-  filter(!is.na(dep_delay), !is.na(arr_delay))
-not_cancelled_new
+not_cancelled %>% 
+  count(dest)
 ```
 
 ```{r}
-not_cancelled_2 <-
-  count(flights, tailnum, wt = distance)
-not_cancelled_2
+not_cancelled %>%
+  group_by(dest) %>% 
+  summarize(n = n())
+```
+
+##### 2
+
+```{r}
+not_cancelled %>% 
+  count(tailnum, wt = distance)
 ```
 
 ```{r}
-not_cancelled_2_new <-
-  flights %>% 
-  group_by(tailnum) %>% 
+not_cancelled %>% 
+  group_by(tailnum) %>%
   summarize(n = sum(distance))
-not_cancelled_2_new
 ```
 
 3. Our definition of cancelled flights (is.na(dep_delay) | is.na(arr_delay) ) is slightly suboptimal. Why? Which is the most important column?
 
-
+We assume that if a flight did not leave it was cancelled. Therefore, when the condition is.na(dep_delay) is met, the flight was cancelled. 
 
 4. Look at the number of cancelled flights per day. Is there a pattern? Is the proportion of cancelled flights related to the average delay?
 
+```{r}
+flights %>% 
+  group_by(day) %>% 
+  summarize(cancelled = mean(is.na(dep_delay)))
+```
+
+```{r}
+flights %>% 
+  group_by(day) %>% 
+  summarize(cancelled = mean(is.na(dep_delay)),
+            dep_del = mean(dep_delay, na.rm = TRUE),
+            arr_del = mean(arr_delay, na.rm = TRUE)) %>% 
+  ggplot(aes(y = cancelled)) +
+  geom_point(aes(x = dep_del), colour = "pink") +
+  geom_point(aes(x = arr_del), colour = "green") +
+  labs(x = "Average delay per day", y = "cancelled flights per day")
+```
+
+This plot shows us that there are more cancelled flights on days with more departure and arrival delays, which is logical, because a delay of a flight affects other flights as well. We also see that there are more departure delays (pink) on an average day. 
+
 5. Which carrier has the worst delays? Challenge: can you disentangle the effects of bad airports vs. bad carriers? Why/why not? (Hint: think about flights %>% group_by(carrier, dest) %>% summarise(n()))
 
+```{r}
+flights %>% 
+  group_by(carrier) %>% 
+  summarize(n = n(),
+            dep_max = max(dep_delay, na.rm=TRUE),
+            arr_max = max(arr_delay, na.rm=TRUE)) %>% 
+  arrange(desc(dep_max, arr_max)) %>% 
+  filter(1 : n() == 1)
+```
+
+```{r}
+flights %>% 
+  group_by(carrier, dest) %>% 
+  summarize(n = n(),
+            dep_max = max(dep_delay, na.rm=TRUE),
+            arr_max = max(arr_delay, na.rm=TRUE)) %>% 
+  arrange(desc(dep_max, arr_max)) %>% 
+  filter(1 : n() == 1)
+```
+
 6. What does the sort argument to count() do. When might you use it?
+
+If TRUE, 'sort' will sort count() output in descending order of n. 
+
+```{r}
+flights %>% 
+  count(carrier, sort = TRUE)
+```
+
+```{r}
+flights %>% 
+  count(flight, sort = TRUE)
+```
